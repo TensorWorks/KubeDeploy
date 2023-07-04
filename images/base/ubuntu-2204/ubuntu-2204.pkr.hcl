@@ -8,13 +8,13 @@ packer {
 }
 
 source "virtualbox-iso" "ubuntu-2204" {
-  // Configure OS
+  // Configure source image
   guest_os_type = "Ubuntu22_LTS_64"
   iso_url       = "https://releases.ubuntu.com/22.04/ubuntu-22.04.2-live-server-amd64.iso"
   iso_checksum  = "sha256:5e38b55d57d94ff029719342357325ed3bda38fa80054f9330dc789cd2d43931"
 
-  // // Build the VM without showing the console
-  // headless = false
+  // Build the VM without showing the console
+  headless = true
 
   // Configure SSH
   ssh_username = "ubuntu"
@@ -22,7 +22,7 @@ source "virtualbox-iso" "ubuntu-2204" {
   ssh_timeout  = "10m"
 
   // Configure build artefacts
-  vm_name          = "ubuntu-2204"
+  vm_name          = "Ubuntu_2204"
   output_directory = "./build"
 
   // Configure hardware resources
