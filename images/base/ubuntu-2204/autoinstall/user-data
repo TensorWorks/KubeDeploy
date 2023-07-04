@@ -21,3 +21,5 @@ autoinstall:
   packages:
     - git
     - curl
+  late-commands:
+    - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
