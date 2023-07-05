@@ -7,6 +7,11 @@ packer {
   }
 }
 
+variable "vm-name" {
+  type    = string
+  default = "K8s_CP"
+}
+
 variable "containerd-version" {
   type    = string
   default = "1.6.8"
@@ -28,13 +33,13 @@ variable "k8s-version" {
 }
 
 variable "calico-version" {
-    type = string
-    default = "3.24.1"
+  type    = string
+  default = "3.24.1"
 }
 
 variable "rancher-version" {
-    type = string
-    default = "0.0.20"
+  type    = string
+  default = "0.0.20"
 }
 
 source "virtualbox-ovf" "k8s-control-plane" {
@@ -52,7 +57,7 @@ source "virtualbox-ovf" "k8s-control-plane" {
   ssh_password = "ubuntu"
   ssh_timeout  = "5m"
 
-  vm_name          = "K8s_CP"
+  vm_name          = "${var.vm-name}"
   output_directory = "${path.root}/build"
 
   shutdown_command = "echo 'ubuntu' | sudo -S shutdown -P now"
@@ -63,8 +68,8 @@ build {
 
   provisioner "shell" {
     environment_vars = [
-        "KEY=K8S_VERSION",
-        "VALUE=${var.k8s-version}",
+      "KEY=K8S_VERSION",
+      "VALUE=${var.k8s-version}",
     ]
     script = "${path.root}/../scripts/set-env-var.sh"
   }
