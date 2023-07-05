@@ -21,5 +21,8 @@ autoinstall:
   packages:
     - git
     - curl
+  snaps:
+    - name: yq
+      classic: false
   late-commands:
     - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu

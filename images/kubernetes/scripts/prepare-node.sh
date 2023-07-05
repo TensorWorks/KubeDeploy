@@ -71,7 +71,32 @@ sudo apt-get install -qy kubelet=${K8S_VERSION}-00 kubeadm=${K8S_VERSION}-00 kub
 sudo apt-mark hold kubelet kubeadm kubectl
 sudo kubeadm config images pull --kubernetes-version ${K8S_VERSION}
 
-# Download configs
+echo "=================================================="
+echo "====== Performing post-installation tasks"
+echo "=================================================="
+# Download configs for additional components
 mkdir -p ~/KubeDeploy/config
 curl -L -o ~/KubeDeploy/config/calico.yaml https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml
 curl -L -o ~/KubeDeploy/config/local-path-storage.yaml https://raw.githubusercontent.com/rancher/local-path-provisioner/v${RANCHER_VERSION}/deploy/local-path-storage.yaml
+
+# Core components should be assigned to the Control Plane node
+yq -i '
+    . | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[0].key = "node-role.kubernetes.io/master" | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[0].operator = "Exists" | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[0].effect = "NoSchedule" | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[1].key = "node-role.kubernetes.io/control-plane" | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[1].operator = "Exists" | 
+    select(.kind == "Deployment").spec.template.spec.tolerations[1].effect = "NoSchedule"
+' ~/KubeDeploy/config/local-path-storage.yaml
+
+yq -i '
+    . | 
+    select(.kind == "Deployment").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key = "node-role.kubernetes.io/control-plane" | 
+    select(.kind == "Deployment").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator = "Exists"
+' ~/KubeDeploy/config/local-path-storage.yaml
+
+yq -i '
+    . | 
+    select(.kind == "Deployment").spec.template.spec.nodeSelector."kubernetes.io/os" = "linux"
+' ~/KubeDeploy/config/local-path-storage.yaml
