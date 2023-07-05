@@ -71,7 +71,7 @@ build {
       "KEY=K8S_VERSION",
       "VALUE=${var.k8s-version}",
     ]
-    script = "${path.root}/../scripts/set-env-var.sh"
+    script = "${path.root}/../../../scripts/set-env-var.sh"
   }
 
   # Install K8s prerequisites
@@ -84,7 +84,7 @@ build {
       "CALICO_VERSION=${var.calico-version}",
       "RANCHER_VERSION=${var.rancher-version}",
     ]
-    script = "${path.root}/../scripts/prepare-node.sh"
+    script = "${path.root}/scripts/prepare-node.sh"
   }
 
   provisioner "file" {
