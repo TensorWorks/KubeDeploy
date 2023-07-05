@@ -23,7 +23,7 @@ source "virtualbox-iso" "ubuntu-2204" {
 
   // Configure build artefacts
   vm_name          = "Ubuntu_2204"
-  output_directory = "./build"
+  output_directory = "${path.root}/build"
 
   // Configure hardware resources
   cpus      = 2
@@ -33,8 +33,8 @@ source "virtualbox-iso" "ubuntu-2204" {
   // Attach autoinstall files
   cd_label = "cidata"
   cd_files = [
-    "./autoinstall/meta-data",
-    "./autoinstall/user-data",
+    "${path.root}/autoinstall/meta-data",
+    "${path.root}/autoinstall/user-data",
   ]
 
   // Boot configuration
