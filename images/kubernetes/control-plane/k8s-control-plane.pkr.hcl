@@ -49,16 +49,16 @@ source "virtualbox-ovf" "k8s-control-plane" {
   // Build the VM without showing the console
   headless = true
 
-  // DEBUG ONLY - This will be deleted
-  keep_registered = true
-  skip_export     = true
+//   // DEBUG ONLY
+//   keep_registered = true
+//   skip_export     = true
 
   ssh_username = "ubuntu"
   ssh_password = "ubuntu"
   ssh_timeout  = "5m"
 
   vm_name          = "${var.vm-name}"
-  output_directory = "${path.root}/build"
+  output_directory = "${path.root}/build/packer"
 
   shutdown_command = "echo 'ubuntu' | sudo -S shutdown -P now"
 }
@@ -95,5 +95,11 @@ build {
   provisioner "file" {
     source      = "${path.root}/scripts/kubeadm-init.sh"
     destination = "~/KubeDeploy/kubeadm-init.sh"
+  }
+
+  post-processor "vagrant" {
+    provider_override = "virtualbox"
+    output = "${path.root}/build/vagrant/packer_{{.BuildName}}_{{.Provider}}.box"
+    // keep_input_artifact = true
   }
 }

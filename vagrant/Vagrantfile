@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Control plane node configuration
+  config.vm.define "control_plane", primary: true do |control_plane|
+    control_plane.vm.box = "file://../images/kubernetes/control-plane/build/vagrant/packer_k8s-control-plane_virtualbox.box"
+
+    control_plane.vm.hostname = "control-plane.local"
+    control_plane.vm.network "private_network", ip: "192.168.56.2"
+
+    control_plane.vm.provision "shell", privileged: false, env: {"NODE_IP" => "192.168.56.2"}, inline: <<-SHELL
+      /home/ubuntu/KubeDeploy/kubeadm-init.sh
+
+      echo "Environment=\"KUBELET_EXTRA_ARGS=--node-ip=${NODE_IP}\"" | sudo tee -a /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+      sudo systemctl daemon-reload
+      sudo systemctl restart kubelet
+      sleep 5
+
+      kubectl apply -f /home/ubuntu/KubeDeploy/config
+    SHELL
+  end
+
+  # Linux worker node configuration
+  config.vm.define "linux_worker" do |linux_worker|
+    linux_worker.vm.box = "file://../images/kubernetes/linux-worker/build/vagrant/packer_k8s-linux-worker_virtualbox.box"
+
+    linux_worker.vm.hostname = "linux-worker.local"
+    linux_worker.vm.network "private_network", type: "dhcp"
+  end
+
+  # Common settings
+  # config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  config.ssh.username = "ubuntu"
+  config.ssh.password = "ubuntu"
+end
