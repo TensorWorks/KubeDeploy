@@ -1,0 +1,8 @@
+[Unit]
+After=network.target
+
+[Service]
+ExecStart=/home/ubuntu/KubeDeploy/discover-worker-nodes.sh
+
+[Install]
+WantedBy=default.target
