@@ -47,13 +47,4 @@ if __name__ == '__main__':
                 print("Failed to ping {}".format(ip))
                 failed.append(ip)
 
-        try:
-            file = open(DISCOVERY_FILE, "w")
-            file.write(",".join(failed))
-            print("Updated discovery file.")
-        except:
-            print("Could not open file: {}.".format(DISCOVERY_FILE))
-            print("Aborting worker node discovery.")
-            exit(0)
-    
         time.sleep(5)

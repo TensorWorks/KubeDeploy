@@ -14,6 +14,7 @@ Vagrant.configure("2") do |config|
     control_plane.vm.provision "file", source: "./hack/discover-worker-nodes.service", destination: "~/KubeDeploy/discover-worker-nodes.service"
 
     control_plane.vm.provision "shell", privileged: false, inline: <<-SHELL
+      echo -n "" > /vagrant/.kubedeploy/pending-worker-nodes.csv
       sudo mv ~/KubeDeploy/discover-worker-nodes.service /etc/systemd/system/discover-worker-nodes.service
       sudo systemctl daemon-reload
       sudo systemctl enable discover-worker-nodes
