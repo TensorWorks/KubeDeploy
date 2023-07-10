@@ -69,3 +69,6 @@ echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https:/
 sudo apt-get update
 sudo apt-get install -qy kubelet=${K8S_VERSION}-00 kubeadm=${K8S_VERSION}-00 kubectl=${K8S_VERSION}-00
 sudo apt-mark hold kubelet kubeadm kubectl
+
+# Cleanup
+rm -f ~/KubeDeploy/containerd.tar.gz ~/KubeDeploy/nerdctl.tar.gz ~/KubeDeploy/runc.amd64

@@ -71,6 +71,9 @@ sudo apt-get install -qy kubelet=${K8S_VERSION}-00 kubeadm=${K8S_VERSION}-00 kub
 sudo apt-mark hold kubelet kubeadm kubectl
 sudo kubeadm config images pull --kubernetes-version ${K8S_VERSION}
 
+# Cleanup
+rm -f ~/KubeDeploy/containerd.tar.gz ~/KubeDeploy/nerdctl.tar.gz ~/KubeDeploy/runc.amd64
+
 echo "=================================================="
 echo "====== Performing post-installation tasks"
 echo "=================================================="
