@@ -11,6 +11,9 @@ VM_KUBE_CONFIG = "/home/ubuntu/.kube/config"
 CP_NODE_IP = "192.168.56.10"
 LNX_WORKER_COUNT = 1
 
+WORKER_NODE_CPUS = 2
+WORKER_NODE_MEMORY = 1024 * 2 * WORKER_NODE_CPUS
+
 Vagrant.configure("2") do |config|
   # Control plane node configuration
   config.vm.define "control_plane", primary: true do |control_plane|
@@ -57,6 +60,22 @@ Vagrant.configure("2") do |config|
 
       linux_worker.vm.hostname = "linux-worker-#{i}.local"
       linux_worker.vm.network "private_network", ip: node_ip
+
+      linux_worker.vm.provider "virtualbox" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+      end
+
+      linux_worker.vm.provider "libvirt" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+      end
+
+      linux_worker.vm.provider "hyperv" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+        provider.maxmemory = WORKER_NODE_MEMORY
+      end
 
       linux_worker.vm.provision "shell", privileged: false, env: {
         "CP_NODE_IP" => CP_NODE_IP,
