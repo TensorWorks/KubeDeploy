@@ -7,7 +7,8 @@ HACK_DIR = "#{ROOT_DIR}/hack"
 VM_APP_DIR = "/home/ubuntu/KubeDeploy"
 VM_SHARE_DIR = "/vagrant/.kubedeploy"
 
-CP_NODE_IP = "192.168.56.2"
+CP_NODE_IP = "192.168.56.10"
+LNX_WORKER_COUNT = 2
 
 Vagrant.configure("2") do |config|
   # Control plane node configuration
@@ -58,24 +59,31 @@ Vagrant.configure("2") do |config|
   end
 
   # Linux worker node configuration
-  config.vm.define "linux_worker" do |linux_worker|
-    linux_worker.vm.box = "file://../images/kubernetes/linux-worker/build/vagrant/packer_k8s-linux-worker_virtualbox.box"
+  (1..LNX_WORKER_COUNT).each do |i|
+    config.vm.define "linux_worker_#{i}" do |linux_worker|
+      linux_worker.vm.box = "file://../images/kubernetes/linux-worker/build/vagrant/packer_k8s-linux-worker_virtualbox.box"
 
-    linux_worker.vm.hostname = "linux-worker.local"
-    linux_worker.vm.network "private_network", type: "dhcp"
+      # Calculate the woker node's IP address
+      cp_split_ip = CP_NODE_IP.split(".")
+      split_ip = [cp_split_ip[0], cp_split_ip[1], cp_split_ip[2], String(Integer(cp_split_ip[3]) + i)]
+      node_ip = split_ip.join(".")
 
-    linux_worker.vm.provision "shell", privileged: false, env: {
-      "CP_NODE_IP" => CP_NODE_IP,
-      "VM_APP_DIR": VM_APP_DIR,
-      "VM_SHARE_DIR": VM_SHARE_DIR,
-    }, inline: <<-SHELL
-      export IP=$(ip -f inet addr show enp0s8 | awk '/inet / {print $2}' | cut -d "/" -f 1)
-      echo -n "${IP}," >> "${VM_SHARE_DIR}/pending-worker-nodes.csv"
-      sleep 2
-      
-      cp "${VM_SHARE_DIR}/join-cluster.sh" "${VM_APP_DIR}/"
-      "${VM_APP_DIR}/join-cluster.sh"
-    SHELL
+      linux_worker.vm.hostname = "linux-worker-#{i}.local"
+      linux_worker.vm.network "private_network", ip: node_ip
+
+      linux_worker.vm.provision "shell", privileged: false, env: {
+        "CP_NODE_IP" => CP_NODE_IP,
+        "VM_APP_DIR": VM_APP_DIR,
+        "VM_SHARE_DIR": VM_SHARE_DIR,
+      }, inline: <<-SHELL
+        export IP=$(ip -f inet addr show enp0s8 | awk '/inet / {print $2}' | cut -d "/" -f 1)
+        echo -n "${IP}," >> "${VM_SHARE_DIR}/pending-worker-nodes.csv"
+        sleep 2
+        
+        cp "${VM_SHARE_DIR}/join-cluster.sh" "${VM_APP_DIR}/"
+        "${VM_APP_DIR}/join-cluster.sh"
+      SHELL
+    end
   end
 
   # Common settings
