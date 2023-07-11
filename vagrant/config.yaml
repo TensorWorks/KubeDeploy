@@ -1,0 +1,9 @@
+---
+cluster:
+  control-plane:
+    ip-address: 192.168.56.10
+  worker-nodes:
+    linux-count: 1
+    # cpus: 8
+    # If 'memory' is left unset, the value will default to 2048 * cpus (recommended)
+    # memory: 4096

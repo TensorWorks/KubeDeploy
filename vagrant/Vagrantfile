@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require 'yaml'
+
 ROOT_DIR    = File.dirname(File.expand_path(__FILE__))
 HACK_DIR = "#{ROOT_DIR}/hack"
 
@@ -8,11 +10,12 @@ VM_APP_DIR = "/home/ubuntu/KubeDeploy"
 VM_SHARE_DIR = "/vagrant/.kubedeploy"
 VM_KUBE_CONFIG = "/home/ubuntu/.kube/config"
 
-CP_NODE_IP = "192.168.56.10"
-LNX_WORKER_COUNT = 1
+CONFIG = YAML.load_file("#{ROOT_DIR}/config.yaml")
 
-WORKER_NODE_CPUS = 2
-WORKER_NODE_MEMORY = 1024 * 2 * WORKER_NODE_CPUS
+CP_NODE_IP = CONFIG["cluster"]["control-plane"]["ip-address"] || "192.168.56.10"
+LNX_WORKER_COUNT = CONFIG["cluster"]["worker-nodes"]["linux-count"] || 1
+WORKER_NODE_CPUS = CONFIG["cluster"]["worker-nodes"]["cpus"] || 2
+WORKER_NODE_MEMORY = CONFIG["cluster"]["worker-nodes"]["memory"] || 2048 * WORKER_NODE_CPUS
 
 Vagrant.configure("2") do |config|
   # Control plane node configuration
