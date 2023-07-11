@@ -18,22 +18,6 @@ Vagrant.configure("2") do |config|
     control_plane.vm.hostname = "control-plane.local"
     control_plane.vm.network "private_network", ip: CP_NODE_IP
 
-    control_plane.vm.provision "file", source: "#{HACK_DIR}/discover-worker-nodes.sh", destination: "#{VM_APP_DIR}/discover-worker-nodes.sh"
-
-    control_plane.vm.provision "file", source: "#{HACK_DIR}/discover-worker-nodes.service", destination: "#{VM_APP_DIR}/discover-worker-nodes.service"
-
-    control_plane.vm.provision "shell", privileged: false, env: {
-      "VM_APP_DIR": VM_APP_DIR,
-      "VM_SHARE_DIR": VM_SHARE_DIR,
-    }, inline: <<-SHELL
-      echo -n "" > "${VM_SHARE_DIR}/pending-worker-nodes.csv"
-      sudo mv "${VM_APP_DIR}/discover-worker-nodes.service" "/etc/systemd/system/discover-worker-nodes.service"
-      sudo systemctl daemon-reload
-      sudo systemctl enable discover-worker-nodes
-    SHELL
-
-    control_plane.vm.provision "shell", reboot: true
-
     control_plane.vm.provision "shell", privileged: false, env: {
       "CP_NODE_IP" => CP_NODE_IP,
       "VM_APP_DIR": VM_APP_DIR,
@@ -76,10 +60,6 @@ Vagrant.configure("2") do |config|
         "VM_APP_DIR": VM_APP_DIR,
         "VM_SHARE_DIR": VM_SHARE_DIR,
       }, inline: <<-SHELL
-        export IP=$(ip -f inet addr show enp0s8 | awk '/inet / {print $2}' | cut -d "/" -f 1)
-        echo -n "${IP}," >> "${VM_SHARE_DIR}/pending-worker-nodes.csv"
-        sleep 2
-        
         cp "${VM_SHARE_DIR}/join-cluster.sh" "${VM_APP_DIR}/"
         "${VM_APP_DIR}/join-cluster.sh"
       SHELL
