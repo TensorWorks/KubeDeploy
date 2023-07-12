@@ -1,0 +1,126 @@
+<!-- This file is a modified version of https://github.com/TensorWorks/DevOps-Packerfiles/blob/504b77bf3b891363beb4a0fd4f69361fcb44abcd/images/base/windows-server-2022/autounattend/qemu/Autounattend.xml -->
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+	
+	<settings pass="windowsPE">
+	
+		<component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<DiskConfiguration>
+				<Disk wcm:action="add">
+					
+					<!-- Use a standard MBR partition layout -->
+					<CreatePartitions>
+						<CreatePartition wcm:action="add">
+							<Order>1</Order>
+							<Type>Primary</Type>
+							<Extend>true</Extend>
+						</CreatePartition>
+					</CreatePartitions>
+					<ModifyPartitions>
+						<ModifyPartition wcm:action="add">
+							<Order>1</Order>
+							<PartitionID>1</PartitionID>
+							<Format>NTFS</Format>
+							<Active>true</Active>
+							<Extend>false</Extend>
+							<Label>OS</Label>
+							<Letter>C</Letter>
+						</ModifyPartition>
+					</ModifyPartitions>
+					
+					<DiskID>0</DiskID>
+					<WillWipeDisk>true</WillWipeDisk>
+				</Disk>
+				<WillShowUI>OnError</WillShowUI>
+				<DisableEncryptedDiskProvisioning>true</DisableEncryptedDiskProvisioning>
+			</DiskConfiguration>
+			<ImageInstall>
+				<OSImage>
+					<InstallTo>
+						<DiskID>0</DiskID>
+						<PartitionID>1</PartitionID>
+					</InstallTo>
+					<InstallFrom>
+						<MetaData wcm:action="add">
+							<Key>/IMAGE/NAME</Key>
+							<Value>${OS_VARIANT}</Value>
+						</MetaData>
+					</InstallFrom>
+				</OSImage>
+			</ImageInstall>
+			<UserData>
+				<ProductKey>
+					<Key>${PRODUCT_KEY}</Key>
+					<WillShowUI>Never</WillShowUI>
+				</ProductKey>
+				<AcceptEula>true</AcceptEula>
+				<FullName>Administrator</FullName>
+			</UserData>
+		</component>
+		
+		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<SetupUILanguage>
+				<UILanguage>en-US</UILanguage>
+			</SetupUILanguage>
+			<InputLocale>en-US</InputLocale>
+			<SystemLocale>en-US</SystemLocale>
+			<UILanguage>en-US</UILanguage>
+			<UserLocale>en-US</UserLocale>
+		</component>
+		
+	</settings>
+	
+	<settings pass="oobeSystem">
+	
+		<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			
+			<!-- Automatically login as the Administrator user when Windows boots for the first time -->
+			<AutoLogon>
+				<Password>
+					<Value>Passw0rd!</Value>
+					<PlainText>true</PlainText>
+				</Password>
+				<Username>Administrator</Username>
+				<Enabled>true</Enabled>
+			</AutoLogon>
+			
+			<OOBE>
+				<HideEULAPage>true</HideEULAPage>
+				<HideLocalAccountScreen>true</HideLocalAccountScreen>
+				<HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+				<HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+				<HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+				<ProtectYourPC>3</ProtectYourPC>
+			</OOBE>
+			
+			<!-- Enable the Administrator user account and set its password -->
+			<UserAccounts>
+				<AdministratorPassword>
+					<Value>Passw0rd!</Value>
+					<PlainText>true</PlainText>
+				</AdministratorPassword>
+			</UserAccounts>
+			
+			<FirstLogonCommands>
+				
+				<!-- Run setup script to install OpenSSH Server and perform other configuration tasks -->
+				<SynchronousCommand wcm:action="add">
+					<RequiresUserInput>false</RequiresUserInput>
+					<Order>1</Order>
+					<Description>Run setup script to install OpenSSH Server and perform other configuration tasks</Description>
+					<CommandLine>powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force; powershell.exe -File 'E:\Setup.ps1'</CommandLine>
+				</SynchronousCommand>
+				
+			</FirstLogonCommands>
+		</component>
+		
+	</settings>
+	
+	<!-- Prevent Server Manager from being displayed at startup -->
+	<settings pass="specialize">
+		<component name="Microsoft-Windows-ServerManager-SvrMgrNc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<DoNotOpenServerManagerAtLogon>true</DoNotOpenServerManagerAtLogon>
+		</component>
+	</settings>
+	
+</unattend>
