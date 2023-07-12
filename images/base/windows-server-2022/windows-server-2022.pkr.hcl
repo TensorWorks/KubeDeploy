@@ -30,7 +30,7 @@ source "virtualbox-iso" "windows-2022" {
   headless = true
 
   // Configure SSH
-  ssh_username = "Administrator"
+  ssh_username = "AdminUser"
   ssh_password = "Passw0rd!"
   ssh_timeout  = "10m"
 
@@ -46,7 +46,6 @@ source "virtualbox-iso" "windows-2022" {
   // Attach autoinstall files
   cd_label = "cidata"
   cd_files = [
-    // "${path.root}/autoinstall/Autounattend.xml",
     "${path.root}/autoinstall/sysprep.xml",
     "${path.root}/scripts/Setup.ps1",
   ]

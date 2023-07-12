@@ -80,7 +80,7 @@
 					<Value>Passw0rd!</Value>
 					<PlainText>true</PlainText>
 				</Password>
-				<Username>Administrator</Username>
+				<Username>AdminUser</Username>
 				<Enabled>true</Enabled>
 			</AutoLogon>
 			
@@ -99,6 +99,17 @@
 					<Value>Passw0rd!</Value>
 					<PlainText>true</PlainText>
 				</AdministratorPassword>
+
+				<LocalAccounts>
+					<LocalAccount wcm:action="add">
+						<Name>AdminUser</Name>
+						<Password>
+							<Value>Passw0rd!</Value>
+							<PlainText>true</PlainText>
+						</Password>
+						<Group>Administrators</Group>
+					</LocalAccount>
+				</LocalAccounts>
 			</UserAccounts>
 			
 			<FirstLogonCommands>
