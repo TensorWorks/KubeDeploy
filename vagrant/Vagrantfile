@@ -4,7 +4,7 @@
 require 'yaml'
 
 ROOT_DIR    = File.dirname(File.expand_path(__FILE__))
-HACK_DIR = "#{ROOT_DIR}/hack"
+SHARE_DIR = "#{ROOT_DIR}/.kubedeploy"
 
 VM_APP_DIR = "/home/ubuntu/KubeDeploy"
 VM_SHARE_DIR = "/vagrant/.kubedeploy"
@@ -14,6 +14,7 @@ CONFIG = YAML.load_file("#{ROOT_DIR}/config.yaml")
 
 CP_NODE_IP = CONFIG["cluster"]["control-plane"]["ip-address"] || "192.168.56.10"
 LNX_WORKER_COUNT = CONFIG["cluster"]["worker-nodes"]["linux-count"] || 1
+WIN_SVR_2022_WORKER_COUNT = CONFIG["cluster"]["worker-nodes"]["windows-server-2022-count"] || 0
 WORKER_NODE_CPUS = CONFIG["cluster"]["worker-nodes"]["cpus"] || 2
 WORKER_NODE_MEMORY = CONFIG["cluster"]["worker-nodes"]["memory"] || 2048 * WORKER_NODE_CPUS
 
@@ -38,15 +39,26 @@ Vagrant.configure("2") do |config|
       sudo systemctl restart kubelet
       sleep 5
 
+      kubectl apply -f "${VM_APP_DIR}/config/calico.yaml"
+      sleep 5
+
+      kubectl patch ipamconfig default --type merge --patch='{"spec": {"strictAffinity": true}}'
+      kubectl patch ippool default-ipv4-ippool --type merge --patch='{"spec": {"vxlanMode": "Always"}}'
       kubectl apply -f "${VM_APP_DIR}/config"
 
+      KUBEADM_JOIN_CMD=$(kubeadm token create --print-join-command | tr -d "\n")
+
       echo "#!/bin/bash -e" > "${VM_APP_DIR}/join-cluster.sh"
-      chmod +x "${VM_APP_DIR}/join-cluster.sh"
       echo -n "sudo " >> "${VM_APP_DIR}/join-cluster.sh"
-      kubeadm token create --print-join-command | tr -d "\n" >> "${VM_APP_DIR}/join-cluster.sh"
+      echo -n $KUBEADM_JOIN_CMD >> "${VM_APP_DIR}/join-cluster.sh"
+      chmod +x "${VM_APP_DIR}/join-cluster.sh"
+
+      echo -n $KUBEADM_JOIN_CMD > "${VM_APP_DIR}/join-cluster.ps1"
+      echo -n ' --cri-socket "npipe:////./pipe/containerd-containerd"' >> "${VM_APP_DIR}/join-cluster.ps1"
 
       mkdir -p "${VM_SHARE_DIR}"
       cp "${VM_APP_DIR}/join-cluster.sh" "${VM_SHARE_DIR}/"
+      cp "${VM_APP_DIR}/join-cluster.ps1" "${VM_SHARE_DIR}/"
       cp "${VM_KUBE_CONFIG}" "${VM_SHARE_DIR}/"
     SHELL
   end
@@ -88,6 +100,50 @@ Vagrant.configure("2") do |config|
         cp "${VM_SHARE_DIR}/join-cluster.sh" "${VM_APP_DIR}/"
         "${VM_APP_DIR}/join-cluster.sh"
       SHELL
+    end
+  end
+
+  # Windows worker node configuration
+  (1..WIN_SVR_2022_WORKER_COUNT).each do |i|
+    config.vm.define "windows_worker_#{i}" do |windows_worker|
+    windows_worker.vm.box = "file://../images/kubernetes/windows-worker/build/vagrant/packer_k8s-windows-2022-worker_virtualbox.box"
+
+      # Calculate the woker node's IP address
+      cp_split_ip = CP_NODE_IP.split(".")
+      split_ip = [
+        cp_split_ip[0], 
+        cp_split_ip[1], 
+        cp_split_ip[2], 
+        String(Integer(cp_split_ip[3]) + LNX_WORKER_COUNT + i)
+      ]
+      node_ip = split_ip.join(".")
+
+      windows_worker.vm.hostname = "win-svr-2022-worker-#{i}"
+      windows_worker.vm.network "private_network", ip: node_ip
+      windows_worker.vm.communicator = "winssh"
+      windows_worker.vm.guest = "windows"
+
+      windows_worker.vm.provider "virtualbox" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+      end
+
+      windows_worker.vm.provider "libvirt" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+      end
+
+      windows_worker.vm.provider "hyperv" do |provider|
+        provider.cpus = WORKER_NODE_CPUS
+        provider.memory = WORKER_NODE_MEMORY
+        provider.maxmemory = WORKER_NODE_MEMORY
+      end
+
+      windows_worker.winssh.shell = "powershell"
+      windows_worker.ssh.username = "AdminUser"
+      windows_worker.ssh.password = "Passw0rd!"
+
+      windows_worker.vm.provision "shell", path: "#{SHARE_DIR}/join-cluster.ps1"
     end
   end
 

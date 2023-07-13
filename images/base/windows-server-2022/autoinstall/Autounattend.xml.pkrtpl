@@ -119,7 +119,7 @@
 					<RequiresUserInput>false</RequiresUserInput>
 					<Order>1</Order>
 					<Description>Run setup script to install OpenSSH Server and perform other configuration tasks</Description>
-					<CommandLine>powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force; powershell.exe -File 'E:\Setup.ps1'</CommandLine>
+					<CommandLine>powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force; powershell.exe -File 'F:\Setup.ps1'</CommandLine>
 				</SynchronousCommand>
 				
 			</FirstLogonCommands>

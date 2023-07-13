@@ -59,13 +59,21 @@ source "virtualbox-iso" "windows-2022" {
   // Boot configuration
   boot_wait = "1s"
 
+  guest_additions_mode = "attach"
+
   // Define a shutdown command
   // It is important to add a shutdown_command. By default Packer halts the virtual machine and 
   // the file system may not be sync'd. Thus, changes made in a provisioner might not be saved.
-  shutdown_command = "%WINDIR%\\system32\\sysprep\\sysprep.exe /quiet /generalize /oobe /shutdown /unattend:E:\\sysprep.xml"
+  shutdown_command = "%WINDIR%\\system32\\sysprep\\sysprep.exe /quiet /generalize /oobe /shutdown /unattend:F:\\sysprep.xml"
   shutdown_timeout = "15m"
 }
 
 build {
   sources = ["sources.virtualbox-iso.windows-2022"]
+
+  provisioner "powershell" {
+    inline = [
+      "Start-Process E:\\VBoxWindowsAdditions.exe /S -Wait",
+    ]
+  }
 }

@@ -82,24 +82,48 @@ mkdir -p ~/KubeDeploy/config
 curl -L -o ~/KubeDeploy/config/calico.yaml https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml
 curl -L -o ~/KubeDeploy/config/local-path-storage.yaml https://raw.githubusercontent.com/rancher/local-path-provisioner/v${RANCHER_VERSION}/deploy/local-path-storage.yaml
 
+curl -L -o ~/KubeDeploy/config/calico-windows-vxlan.yaml https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico-windows-vxlan.yaml
+# curl -L -o ~/KubeDeploy/config/windows-kube-proxy-2019.yaml https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/windows-kube-proxy.yaml
+curl -L -o ~/KubeDeploy/config/windows-kube-proxy-2022.yaml https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/windows-kube-proxy.yaml
+
 # Core components should be assigned to the Control Plane node
-yq -i '
+yq -i "
     . | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[0].key = "node-role.kubernetes.io/master" | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[0].operator = "Exists" | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[0].effect = "NoSchedule" | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[1].key = "node-role.kubernetes.io/control-plane" | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[1].operator = "Exists" | 
-    select(.kind == "Deployment").spec.template.spec.tolerations[1].effect = "NoSchedule"
-' ~/KubeDeploy/config/local-path-storage.yaml
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[0].key = \"node-role.kubernetes.io/master\" | 
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[0].operator = \"Exists\" | 
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[0].effect = \"NoSchedule\" | 
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[1].key = \"node-role.kubernetes.io/control-plane\" | 
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[1].operator = \"Exists\" | 
+    select(.kind == \"Deployment\").spec.template.spec.tolerations[1].effect = \"NoSchedule\"
+" ~/KubeDeploy/config/local-path-storage.yaml
 
-yq -i '
+yq -i "
     . | 
-    select(.kind == "Deployment").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key = "node-role.kubernetes.io/control-plane" | 
-    select(.kind == "Deployment").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator = "Exists"
-' ~/KubeDeploy/config/local-path-storage.yaml
+    select(.kind == \"Deployment\").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key = \"node-role.kubernetes.io/control-plane\" | 
+    select(.kind == \"Deployment\").spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator = \"Exists\"
+" ~/KubeDeploy/config/local-path-storage.yaml
 
-yq -i '
+yq -i "
     . | 
-    select(.kind == "Deployment").spec.template.spec.nodeSelector."kubernetes.io/os" = "linux"
-' ~/KubeDeploy/config/local-path-storage.yaml
+    select(.kind == \"Deployment\").spec.template.spec.nodeSelector.\"kubernetes.io/os\" = \"linux\"
+" ~/KubeDeploy/config/local-path-storage.yaml
+
+yq -i "
+    . |
+    select(.kind == \"ConfigMap\").data.KUBERNETES_SERVICE_HOST = \"192.168.56.10\" | 
+    select(.kind == \"ConfigMap\").data.KUBERNETES_SERVICE_PORT = \"6443\"
+" ~/KubeDeploy/config/calico-windows-vxlan.yaml
+
+# yq -i "
+#     . |
+#     select(.kind == \"DaemonSet\").spec.template.spec.nodeSelector.\"node.kubernetes.io/windows-build\" = \"10.0.17763\" | 
+#     select(.kind == \"DaemonSet\").spec.template.spec.containers[0].image = \"mcr.microsoft.com/windows/nanoserver:ltsc2019\" | 
+#     select(.kind == \"DaemonSet\").spec.template.spec.containers[0].env |= map(select(.name == \"K8S_VERSION\").value = \"${K8S_VERSION}\")
+# " ~/KubeDeploy/config/windows-kube-proxy-2019.yaml
+
+yq -i "
+    . |
+    select(.kind == \"DaemonSet\").spec.template.spec.nodeSelector.\"node.kubernetes.io/windows-build\" = \"10.0.20348\" | 
+    select(.kind == \"DaemonSet\").spec.template.spec.containers[0].image = \"mcr.microsoft.com/windows/nanoserver:ltsc2022\" | 
+    select(.kind == \"DaemonSet\").spec.template.spec.containers[0].env |= map(select(.name == \"K8S_VERSION\").value = \"${K8S_VERSION}\")
+" ~/KubeDeploy/config/windows-kube-proxy-2022.yaml
